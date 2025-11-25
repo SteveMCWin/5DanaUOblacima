@@ -1,26 +1,16 @@
-import datetime as dt
+from pydantic import BaseModel, Field
+from datetime import time
 
 
-class Meal:
-    name: str
-    start_time: dt.time
-    end_time: dt.time
-
-    def __init__(self, name, start_time, end_time):
-        self.name = name
-        self.start_time = start_time
-        self.end_time = end_time
+class Meal(BaseModel):
+    meal: str
+    from_: time = Field(alias="from")
+    to: time
 
 
-class Canteen:
-    id: int
+class Canteen(BaseModel):
+    id: int | None = None
     name: str
     location: str
     capacity: int
-    working_hours: list[Meal]
-
-    def __init__(self, name, location, capacity, working_hours):
-        self.name = name
-        self.location = location
-        self.capacity = capacity
-        self.working_hours = working_hours
+    workingHours: list[Meal]
