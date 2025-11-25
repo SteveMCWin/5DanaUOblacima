@@ -1,9 +1,11 @@
 from pydantic import BaseModel
+from typing import Optional
 import datetime as dt
 
 
 class Reservation(BaseModel):
-    canteenId: int | None = None
+    id: Optional[int] = None
+    canteenId: int
     studentId: int
     date: dt.date
     time: dt.time

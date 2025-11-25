@@ -118,15 +118,54 @@ class DB:
         self.canteen_reservations.pop(ct_id)
 
     def doesReservationOverlap(self, r: reservation.Reservation):
+        # TODO
         return False
+
+    def isCanteenFull(self, r: reservation.Reservation):
+        # TODO
+        return False
+
+    def isValidMealTime(r):
+        # TODO
+        return True
 
     def store_reservation(self, r: reservation.Reservation):
         if self.doesReservationOverlap(r):
             raise ValueError("User cannot have two reservations that overlap")
-        # check canteen capacity
+        if not self.isValidMealTime(r):
+            raise ValueError(
+                "Canteen isn't open at the specified date and time")
+        if self.isCanteenFull(r):
+            raise ValueError(
+                "Canteen has no free spots for the specified date and time")
 
-        # s.id = self.next_student_id
-        # self.students[s.id] = s
-        # self.emails.add(s.email)
+        # TODO
+        # update the correct values in the canteen_reservations
+        # and update the correct value from student_reservations
 
-        self.next_student_id += 1
+        r.id = self.next_reservation_id
+        self.reservations[r.id] = r
+
+        self.next_reservation_id += 1
+
+    def retrieve_reservation(self, r_id: int):
+        valid_status = False
+        exists = r_id in self.reservations
+        if exists:
+            valid_status = self.reservations[r_id] == "Active"
+
+        if exists and valid_status:
+            return self.reservations[r_id]
+
+        raise ValueError(
+            "Reservation with id {} isn't stored in memory".format(id))
+
+    def delete_reservation(self, r_id: int, student_id: int):
+        r = self.retrieve_reservation(r_id)
+        if r.studentId != student_id:
+            raise PermissionError(
+                "Students can delete only their own reservations")
+
+        # TODO
+        # update the correct values in the canteen_reservations
+        # and update the correct value from student_reservations

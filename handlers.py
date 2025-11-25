@@ -94,6 +94,7 @@ async def handle_delete_canteen(id: int, studentId: int = Header()):
     except Exception:
         raise HTTPException(status_code=500, detail="Server error")
 
+
 @app.post("/reservations", response_model=reservation.Reservation, status_code=status.HTTP_201_CREATED)
 async def handle_post_reservations(r: reservation.Reservation, response: Response):
     return None

@@ -10,7 +10,7 @@ class Meal(BaseModel):
 
 
 class Canteen(BaseModel):
-    id: int | None = None
+    id: Optional[int] = None
     name: Optional[str] = None
     location: Optional[str] = None
     capacity: Optional[int] = None
