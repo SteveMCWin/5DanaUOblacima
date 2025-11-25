@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 from datetime import time
 
 
@@ -10,7 +11,7 @@ class Meal(BaseModel):
 
 class Canteen(BaseModel):
     id: int | None = None
-    name: str
-    location: str
-    capacity: int
-    workingHours: list[Meal]
+    name: Optional[str] = None
+    location: Optional[str] = None
+    capacity: Optional[int] = None
+    workingHours: Optional[list] = None

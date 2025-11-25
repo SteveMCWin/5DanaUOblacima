@@ -38,14 +38,7 @@ async def handle_get_students(id: int):
 @app.post("/canteens", response_model=Canteen, status_code=status.HTTP_201_CREATED)
 async def handle_post_canteens(c: Canteen, response: Response, studentId: int = Header()):
     try:
-        s = db.retrieve_student(studentId)
-    except ValueError:
-        raise HTTPException(status_code=418, detail="Invalid input")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Server error")
-
-    try:
-        db.store_canteen(c, s)
+        db.store_canteen(c, studentId)
     except ValueError:
         raise HTTPException(status_code=418, detail="Invalid input")
     except Exception:
@@ -58,19 +51,52 @@ async def handle_get_canteens():
     return db.retrieve_all_canteens()
 
 
-@app.get("/canteens/{id}")
+@app.get("/canteens/{id}", response_model=Canteen, status_code=status.HTTP_200_OK)
 async def handle_get_canteen(id: int):
-    return {"message": "Haiii"}
+    try:
+        ct = db.retrieve_canteen(id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Server error")
+    return ct
 
 
-@app.put("/canteens/{id}")
-async def handle_put_canteen(id: int):
-    return {"message": "Haiii"}
+@app.put("/canteens/{id}", response_model=Canteen, status_code=status.HTTP_200_OK)
+async def handle_put_canteen(c: Canteen, id: int, response: Response, studentId: int = Header()):
+    try:
+        existing = db.retrieve_canteen(id)
+
+        if c.name is not None:
+            existing.name = c.name
+        if c.location is not None:
+            existing.location = c.location
+        if c.capacity is not None:
+            existing.capacity = c.capacity
+        if c.workingHours is not None:
+            existing.workingHours = c.workingHours
+
+        db.update_canteen(existing, studentId)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Server error")
+    return existing
 
 
-@app.delete("/canteens/{id}")
-async def handle_delete_canteen(id: int):
-    return {"message": "Haiii"}
+@app.delete("/canteens/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def handle_delete_canteen(id: int, studentId: int = Header()):
+    try:
+        db.delete_canteen(id, studentId)
+        return {}
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Server error")
+
+@app.post("/reservations", response_model=reservation.Reservation, status_code=status.HTTP_201_CREATED)
+async def handle_post_reservations(r: reservation.Reservation, response: Response):
+    return None
 
 
 # @app.get("/canteens/status")
