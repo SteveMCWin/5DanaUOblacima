@@ -6,6 +6,7 @@ API for managing canteen reservations, made for the '5 dana u oblacima' hackaton
 
 ### Technologies
 - **Python**: 3.13.7
+- **Pip**: 25.3
 - **Docker**: 28.3.3, build 980b856
 - **Docker Compose**: 2.40.3
 
