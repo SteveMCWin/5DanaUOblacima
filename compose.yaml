@@ -1,0 +1,14 @@
+services:
+  app:
+    image: stevemcwin/pet_dana_u_oblacima
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    command: uvicorn handlers:app --host 0.0.0.0 --port 8000 --reload
+
+  test:
+    image: stevemcwin/pet_dana_u_oblacima
+    volumes:
+      - .:/code
+    command: pytest -v
