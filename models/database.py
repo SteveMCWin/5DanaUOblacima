@@ -320,12 +320,14 @@ class DB:
     def getCanteenMealName(self, ct_id: int, t: dt.time):
         ct = self.retrieve_canteen(ct_id)
         for m in ct.workingHours:
-            if (m.from_ <= t) and (m.to >= t):
+            if (m.from_ <= t) and (m.to > t):
                 return m.meal
 
         return ""
 
     def get_canteen_cap_status(self, ct_id: int, startDate: dt.date, endDate: dt.date, startTime: dt.time, endTime: dt.time, duration: int):
+        if duration != 30 and duration != 60:
+            raise ValueError("The duration must be either 30 or 60 (minutes)")
         res = canteen.CanteenCapacities(canteenId=ct_id, slots=[])
 
         current_date = startDate
