@@ -118,18 +118,6 @@ class DB:
         self.canteens.pop(ct_id)
         self.canteen_reservations.pop(ct_id)
 
-    def doesReservationOverlap(self, r: reservation.Reservation):
-        # TODO
-        return False
-
-    def isCanteenFull(self, r: reservation.Reservation):
-        # TODO
-        return False
-
-    def isValidMealTime(self, r: reservation.Reservation):
-        # TODO
-        return True
-
     def isDateInThePast(self, d: dt.date, t: dt.time):
         dt_reservation = dt.datetime.combine(d, t)
         return dt_reservation < dt.datetime.now()
@@ -224,6 +212,39 @@ class DB:
 
         return False
 
+    def isValidMealTime(self, r: reservation.Reservation):
+        r_start_dt = dt.datetime.combine(r.date, r.time)
+        r_end_dt = r_start_dt + dt.timedelta(minutes=r.duration)
+
+        ct = self.retrieve_canteen(r.canteenId)
+        for m in ct.workingHours:
+            meal_start_dt = dt.datetime.combine(r.date, m.from_)
+            meal_end_dt = dt.datetime.combine(r.date, m.to)
+            if (meal_start_dt <= r_start_dt) and (meal_end_dt >= r_end_dt):
+                return True
+
+        return False
+
+    def isCanteenFull(self, r: reservation.Reservation):
+        ct = self.retrieve_canteen(r.canteenId)
+        key1 = f"{r.date.isoformat()}|{r.time.strftime('%H:%M')}"
+        if key1 not in self.canteen_reservations[ct.id]:
+            if r.duration != 60:
+                return False
+        elif self.canteen_reservations[ct.id][key1] >= ct.capacity:
+            return True
+
+        if r.duration != 60:
+            return False
+
+        dt_combined = dt.datetime.combine(r.date, r.time)
+        dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
+        key2 = f"{dt_plus_30.date().isoformat()}|{
+            dt_plus_30.time().strftime('%H:%M')}"
+        if key2 not in self.canteen_reservations[ct.id]:
+            return False
+        return self.canteen_reservations[ct.id][key2] >= ct.capacity
+
     def store_reservation(self, r: reservation.Reservation):
         if not (r.studentId in self.students):
             raise ValueError(
@@ -231,6 +252,10 @@ class DB:
         if not (r.canteenId in self.canteens):
             raise ValueError(
                 "Canteen with id {} isn't stored in memory".format(r.canteenId))
+
+        if self.isDateInThePast(r.date, r.time):
+            raise ValueError(
+                "Cannot make reservations in the past")
         if self.doesReservationOverlap(r):
             raise ValueError("User cannot have two reservations that overlap")
         if not self.isValidMealTime(r):
@@ -239,9 +264,6 @@ class DB:
         if self.isCanteenFull(r):
             raise ValueError(
                 "Canteen has no free spots for the specified date and time")
-        if self.isDateInThePast(r.date, r.time):
-            raise ValueError(
-                "Cannot make reservations in the past")
 
         self.handleNewCanteenReservation(
             r.canteenId, r.date, r.time, r.duration)

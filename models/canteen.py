@@ -14,4 +14,4 @@ class Canteen(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
     capacity: Optional[int] = None
-    workingHours: Optional[list] = None
+    workingHours: Optional[list[Meal]] = None
