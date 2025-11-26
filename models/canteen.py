@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import time
+from datetime import date, time
 
 
 class Meal(BaseModel):
@@ -15,3 +15,15 @@ class Canteen(BaseModel):
     location: Optional[str] = None
     capacity: Optional[int] = None
     workingHours: Optional[list[Meal]] = None
+
+
+class CapacityResponse(BaseModel):
+    date: date
+    meal: str
+    startTime: time
+    remainingCapacity: int
+
+
+class CanteenCapacities(BaseModel):
+    canteenId: int
+    slots: list[CapacityResponse]

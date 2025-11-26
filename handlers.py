@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Header
 import datetime as dt
 from models import database, student, reservation
-from models.canteen import Canteen
+from models.canteen import Canteen, CanteenCapacities
 
 
 app = FastAPI()
@@ -31,6 +31,43 @@ async def handle_get_students(id: int):
         return s
     except ValueError:
         raise HTTPException(status_code=404, detail="Not found")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Server error")
+
+
+@app.get("/canteens/status", response_model=list[CanteenCapacities], status_code=status.HTTP_200_OK)
+async def handle_canteens_status(
+    startDate: dt.date,
+    endDate: dt.date,
+    startTime: dt.time,
+    endTime: dt.time,
+    duration: int
+):
+    try:
+        r = db.get_all_canteens_cap_status(
+            startDate, endDate, startTime, endTime, duration)
+        return r
+    except ValueError:
+        raise HTTPException(status_code=418, detail="Invalid input")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Server error")
+
+
+@app.get("/canteens/{id}/status", response_model=CanteenCapacities, status_code=status.HTTP_200_OK)
+async def handle_canteens_status(
+    id: int,
+    startDate: dt.date,
+    endDate: dt.date,
+    startTime: dt.time,
+    endTime: dt.time,
+    duration: int
+):
+    try:
+        r = db.get_canteen_cap_status(
+            id, startDate, endDate, startTime, endTime, duration)
+        return r
+    except ValueError:
+        raise HTTPException(status_code=418, detail="Invalid input")
     except Exception:
         raise HTTPException(status_code=500, detail="Server error")
 
@@ -117,13 +154,3 @@ async def handle_delete_reservations(id: int, response: Response, studentId: int
         raise HTTPException(status_code=418, detail="Invalid input")
     except Exception:
         raise HTTPException(status_code=500, detail="Server error")
-
-# @app.get("/canteens/status")
-# def canteen_status(
-#     startDate: dt,
-#     endDate: dt,
-#     startTime: t,
-#     endTime: t,
-#     duration: int
-# ):
-#     return {"message": "Haiii"}
