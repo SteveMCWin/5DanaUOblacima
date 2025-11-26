@@ -97,8 +97,13 @@ async def handle_delete_canteen(id: int, studentId: int = Header()):
 
 @app.post("/reservations", response_model=reservation.Reservation, status_code=status.HTTP_201_CREATED)
 async def handle_post_reservations(r: reservation.Reservation, response: Response):
-    return None
-
+    try:
+        db.store_reservation(r)
+    except ValueError:
+        raise HTTPException(status_code=418, detail="Invalid input")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Server error")
+    return r
 
 # @app.get("/canteens/status")
 # def canteen_status(

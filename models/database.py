@@ -1,3 +1,4 @@
+import datetime as dt
 from models import student, canteen, reservation
 
 
@@ -125,9 +126,44 @@ class DB:
         # TODO
         return False
 
-    def isValidMealTime(r):
+    def isValidMealTime(self, r: reservation.Reservation):
         # TODO
         return True
+
+    def isDateInThePast(self, d: dt.date, t: dt.time):
+        # TODO
+        return False
+
+    def addReservationToCanteen(self, ct_id: int, key: str):
+        if key in self.canteen_reservations[ct_id]:
+            self.canteen_reservations[ct_id][key] += 1
+        else:
+            self.canteen_reservations[ct_id][key] = 1
+
+    def handleNewCanteenReservation(self, ct_id: int, dat: dt.date, t: dt.time, dur: dt.timedelta):
+        key1 = f"{dat.isoformat()}|{t.strftime('%H:%M')}"
+        self.addReservationToCanteen(ct_id, key1)
+
+        if dur == dt.timedelta(minutes=60):
+            dt_combined = dt.datetime.combine(dat, t)
+            dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
+            key2 = f"{dt_plus_30.date().isoformat()}|{
+                dt_plus_30.time().strftime('%H:%M')}"
+            self.addReservationToCanteen(ct_id, key2)
+
+    def addReservationToStudent(self, student_id: int, key: str):
+        self.student_reservations[student_id][key] = True
+
+    def handleNewStudentReservation(self, student_id: int, dat: dt.date, t: dt.time, dur: int):
+        key1 = f"{dat.isoformat()}|{t.strftime('%H:%M')}"
+        self.addReservationToStudent(student_id, key1)
+
+        if dur == 60:
+            dt_combined = dt.datetime.combine(dat, t)
+            dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
+            key2 = f"{dt_plus_30.date().isoformat()}|{
+                dt_plus_30.time().strftime('%H:%M')}"
+            self.addReservationToStudent(student_id, key2)
 
     def store_reservation(self, r: reservation.Reservation):
         if self.doesReservationOverlap(r):
@@ -138,10 +174,14 @@ class DB:
         if self.isCanteenFull(r):
             raise ValueError(
                 "Canteen has no free spots for the specified date and time")
+        if self.isDateInThePast(r.date, r.time):
+            raise ValueError(
+                "Cannot make reservations in the past")
 
-        # TODO
-        # update the correct values in the canteen_reservations
-        # and update the correct value from student_reservations
+        self.handleNewCanteenReservation(
+            r.canteenId, r.date, r.time, r.duration)
+        self.handleNewStudentReservation(
+            r.studentId, r.date, r.time, r.duration)
 
         r.id = self.next_reservation_id
         self.reservations[r.id] = r

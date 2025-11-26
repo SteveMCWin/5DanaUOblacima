@@ -9,5 +9,5 @@ class Reservation(BaseModel):
     studentId: int
     date: dt.date
     time: dt.time
-    duration: dt.timedelta
+    duration: int
     status: str = "Active"
