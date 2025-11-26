@@ -75,6 +75,9 @@ class DB:
             raise ValueError(
                 "There is already a canteen at location {}".format(ct.location))
 
+        # if len(ct.workingHours) != 3:
+        #     raise ValueError("Canteen must have three meals")
+
         ct.id = self.next_canteen_id
         self.canteens[ct.id] = ct
 
@@ -342,9 +345,11 @@ class DB:
                 remaining_cap = ct.capacity
                 key = f"{d.isoformat()}|{t.strftime('%H:%M')}"
                 if key in self.canteen_capacities[ct_id]:
-                    remaining_cap = ct.capacity - self.canteen_capacities[ct_id][key]
+                    remaining_cap = ct.capacity - \
+                        self.canteen_capacities[ct_id][key]
 
-                res.slots.append(canteen.CapacityResponse(date=d, meal=meal_name, startTime=t, remainingCapacity=remaining_cap))
+                res.slots.append(canteen.CapacityResponse(
+                    date=d, meal=meal_name, startTime=t, remainingCapacity=remaining_cap))
 
                 curr_time += dt.timedelta(minutes=duration)
 
@@ -355,6 +360,7 @@ class DB:
     def get_all_canteens_cap_status(self, startDate: dt.date, endDate: dt.date, startTime: dt.time, endTime: dt.time, duration: int):
         res = []
         for ct_id in self.canteens:
-            res.append(self.get_canteen_cap_status(ct_id, startDate, endDate, startTime, endTime, duration))
+            res.append(self.get_canteen_cap_status(
+                ct_id, startDate, endDate, startTime, endTime, duration))
 
         return res

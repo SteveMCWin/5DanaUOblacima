@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Header
 import datetime as dt
 from models import database, student, reservation
-from models.canteen import Canteen, CanteenCapacities
+from models.canteen import Canteen, CanteenCapacities, CanteenPut
 
 
 app = FastAPI()
@@ -100,18 +100,18 @@ async def handle_get_canteen(id: int):
 
 
 @app.put("/canteens/{id}", response_model=Canteen, status_code=status.HTTP_200_OK)
-async def handle_put_canteen(c: Canteen, id: int, response: Response, studentId: int = Header()):
+async def handle_put_canteen(c_put: CanteenPut, id: int, response: Response, studentId: int = Header()):
     try:
         existing = db.retrieve_canteen(id)
 
-        if c.name is not None:
-            existing.name = c.name
-        if c.location is not None:
-            existing.location = c.location
-        if c.capacity is not None:
-            existing.capacity = c.capacity
-        if c.workingHours is not None:
-            existing.workingHours = c.workingHours
+        if c_put.name is not None:
+            existing.name = c_put.name
+        if c_put.location is not None:
+            existing.location = c_put.location
+        if c_put.capacity is not None:
+            existing.capacity = c_put.capacity
+        if c_put.workingHours is not None:
+            existing.workingHours = c_put.workingHours
 
         db.update_canteen(existing, studentId)
         return existing
