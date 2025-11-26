@@ -131,8 +131,8 @@ class DB:
         return True
 
     def isDateInThePast(self, d: dt.date, t: dt.time):
-        # TODO
-        return False
+        dt_reservation = dt.datetime.combine(d, t)
+        return dt_reservation < dt.datetime.now()
 
     def addReservationToCanteen(self, ct_id: int, key: str):
         if key in self.canteen_reservations[ct_id]:
@@ -140,19 +140,53 @@ class DB:
         else:
             self.canteen_reservations[ct_id][key] = 1
 
-    def handleNewCanteenReservation(self, ct_id: int, dat: dt.date, t: dt.time, dur: dt.timedelta):
+    def deleteReservationFromCanteen(self, ct_id: int, key: str):
+        if not (ct_id in self.canteen_reservations):
+            raise ValueError(
+                "There are no reservations in canteen with id {}".format(ct_id))
+        if not (key in self.canteen_reservations[ct_id]):
+            raise ValueError(
+                "There are no reservations in canteen with id {} at {}".format(ct_id, key))
+        self.canteen_reservations[ct_id][key] -= 1
+        if self.canteen_reservations[ct_id][key] < 0:
+            self.canteen_reservations[ct_id][key] = 0
+
+    def handleNewCanteenReservation(self, ct_id: int, dat: dt.date, t: dt.time, dur: int):
         key1 = f"{dat.isoformat()}|{t.strftime('%H:%M')}"
         self.addReservationToCanteen(ct_id, key1)
 
-        if dur == dt.timedelta(minutes=60):
+        if dur == 60:
             dt_combined = dt.datetime.combine(dat, t)
             dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
             key2 = f"{dt_plus_30.date().isoformat()}|{
                 dt_plus_30.time().strftime('%H:%M')}"
             self.addReservationToCanteen(ct_id, key2)
 
+    def handleDeleteCanteenReservation(self, ct_id: int, dat: dt.date, t: dt.time, dur: int):
+        key1 = f"{dat.isoformat()}|{t.strftime('%H:%M')}"
+        self.deleteReservationFromCanteen(ct_id, key1)
+
+        if dur == 60:
+            dt_combined = dt.datetime.combine(dat, t)
+            dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
+            key2 = f"{dt_plus_30.date().isoformat()}|{
+                dt_plus_30.time().strftime('%H:%M')}"
+            self.deleteReservationFromCanteen(ct_id, key2)
+
     def addReservationToStudent(self, student_id: int, key: str):
+        if not (student_id in self.students):
+            raise ValueError(
+                "Student with id {} isn't stored in the db".format(student_id))
         self.student_reservations[student_id][key] = True
+
+    def deleteReservationFromStudent(self, student_id: int, key: str):
+        if not (student_id in self.students):
+            raise ValueError(
+                "Student with id {} isn't stored in the db".format(student_id))
+        if not (key in self.student_reservations[student_id]):
+            raise ValueError(
+                "Student with id {} doesn't have a reservation at {}".format(student_id, key))
+        self.student_reservations[student_id].pop(key)
 
     def handleNewStudentReservation(self, student_id: int, dat: dt.date, t: dt.time, dur: int):
         key1 = f"{dat.isoformat()}|{t.strftime('%H:%M')}"
@@ -165,7 +199,38 @@ class DB:
                 dt_plus_30.time().strftime('%H:%M')}"
             self.addReservationToStudent(student_id, key2)
 
+    def handleDeleteStudentReservation(self, student_id: int, dat: dt.date, t: dt.time, dur: int):
+        key1 = f"{dat.isoformat()}|{t.strftime('%H:%M')}"
+        self.deleteReservationFromStudent(student_id, key1)
+
+        if dur == 60:
+            dt_combined = dt.datetime.combine(dat, t)
+            dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
+            key2 = f"{dt_plus_30.date().isoformat()}|{
+                dt_plus_30.time().strftime('%H:%M')}"
+            self.deleteReservationFromStudent(student_id, key2)
+
+    def doesReservationOverlap(self, r: reservation.Reservation):
+        key1 = f"{r.date.isoformat()}|{r.time.strftime('%H:%M')}"
+        if key1 in self.student_reservations[r.studentId]:
+            return True
+
+        if r.duration == 60:
+            dt_combined = dt.datetime.combine(r.date, r.time)
+            dt_plus_30 = dt_combined + dt.timedelta(minutes=30)
+            key2 = f"{dt_plus_30.date().isoformat()}|{
+                dt_plus_30.time().strftime('%H:%M')}"
+            return key2 in self.student_reservations[r.studentId]
+
+        return False
+
     def store_reservation(self, r: reservation.Reservation):
+        if not (r.studentId in self.students):
+            raise ValueError(
+                "Student with id {} isn't stored in memory".format(r.studentId))
+        if not (r.canteenId in self.canteens):
+            raise ValueError(
+                "Canteen with id {} isn't stored in memory".format(r.canteenId))
         if self.doesReservationOverlap(r):
             raise ValueError("User cannot have two reservations that overlap")
         if not self.isValidMealTime(r):
@@ -189,12 +254,12 @@ class DB:
         self.next_reservation_id += 1
 
     def retrieve_reservation(self, r_id: int):
-        valid_status = False
         exists = r_id in self.reservations
         if exists:
-            valid_status = self.reservations[r_id] == "Active"
+            valid_status = self.reservations[r_id].status == "Active"
 
         if exists and valid_status:
+            print("Found the reservation")
             return self.reservations[r_id]
 
         raise ValueError(
@@ -206,6 +271,11 @@ class DB:
             raise PermissionError(
                 "Students can delete only their own reservations")
 
-        # TODO
-        # update the correct values in the canteen_reservations
-        # and update the correct value from student_reservations
+        r.status = "Cancelled"
+
+        self.handleDeleteCanteenReservation(
+            r.canteenId, r.date, r.time, r.duration)
+        self.handleDeleteStudentReservation(
+            r.studentId, r.date, r.time, r.duration)
+
+        return r
