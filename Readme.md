@@ -72,6 +72,10 @@ API for managing canteen reservations, made for the '5 dana u oblacima' hackaton
 
 ### Python doesn't need building lmao
 
+```bash
+:^)
+```
+
 ### Build with Docker
 
 ```bash
